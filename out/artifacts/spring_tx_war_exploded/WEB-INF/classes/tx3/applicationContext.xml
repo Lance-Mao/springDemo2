@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       					   http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!--datasource-->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >
+		<property name="driverClass" value="com.mysql.jdbc.Driver"></property>
+		<property name="jdbcUrl" value="jdbc:mysql:///zhuanzhang"></property>
+		<property name="user" value="root"></property>
+		<property name="password" value="root"></property>
+	</bean>
+	<!--dao-->
+	<bean id="accountDao" class="tx3.dao.impl.AccountDaoImpl">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!--service-->
+
+	<!--
+	    bean 配置需要创建的对象
+	    id ：用于之后从spring容器获得实例时使用的
+		class ：需要创建实例的全限定类名
+		ref ：另一个bean的id值的引用
+	-->
+<!--	<bean id="accountService1" class="tx3.service.impl.AccountServiceImpl">
+		<property name="accountDao" ref="accountDao"></property>
+	</bean>-->
+	<bean id="accountService" class="tx3.service.impl.AccountServiceImpl">
+		<property name="accountDao" ref="accountDao"></property>
+	</bean>
+
+	<!--service 代理对象
+	      proxyInterfaces   接口
+	      target  目标
+	      transactionAttributes 事务详情
+	           prop key=""    确定哪些方法使用当前事务配置
+	-->
+	<bean  id="proxyAccountService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="proxyInterfaces" value="tx3.service.AccountService"></property>
+		<property name="target" value="accountService"></property>
+		<property name="transactionManager" ref="txManager"></property>
+		<property name="transactionAttributes">
+			<props>
+				<prop key="transfer">PROPAGATION_REQUIRED,ISOLATION_DEFAULT</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!--事务管理器-->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+</beans>
